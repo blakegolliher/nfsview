@@ -45,6 +45,9 @@ Override per-package metadata with `PKG_LICENSE=...`, `PKG_MAINTAINER=...`,
 - `--no-dns`
 - `--raw-dump <path>` dump one parsed snapshot and exit
 - `--remote-ports <csv>` default `2049,20049`
+- `--backend <auto|proc|ebpf>` latency backend selector, default `auto`
+  (`auto` uses eBPF when built in and attach succeeds, else `/proc`; `proc`
+  forces `/proc` only; `ebpf` requires the eBPF backend)
 
 ## Keybinds
 
@@ -132,6 +135,11 @@ dumps per-tick latency snapshots, and exits 0 on success.
 - Snapshot-and-diff per tick — no map reset, so no read+delete race window.
 - Per-op p50..p99.999 + max via log2 histograms.
 - Hist tab with percentile table and a real distribution sparkline.
+- **Runtime backend selector** (`--backend=auto|proc|ebpf`). `proc` forces
+  the `/proc` path even on an eBPF-enabled build; `ebpf` insists on the eBPF
+  backend (and errors at startup if the binary was built without the
+  feature); `auto` (default) prefers eBPF when available and silently falls
+  back to `/proc`.
 
 ### Not yet implemented
 
@@ -141,8 +149,6 @@ dumps per-tick latency snapshots, and exits 0 on success.
 - **SUNRPC wire-RTT layer** (the wire-vs-client-stack diagnostic from
   the design doc).
 - **Outlier ringbuf** (`--emit-outliers=<ms>`).
-- **Runtime backend selector** (`--backend=auto|proc|ebpf`); the cargo
-  feature is currently the only toggle.
 - **v4 metadata ops** (GETATTR, LOOKUP, OPEN, etc.) — only the
   read/write/commit pgio path is instrumented today.
 

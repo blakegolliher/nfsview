@@ -7,7 +7,7 @@ use clap::{Parser, ValueEnum};
 
 use nfs_top::app::App;
 use nfs_top::model::types::{SortKey, UnitsMode};
-use nfs_top::sampler::{spawn_sampler, SamplerConfig};
+use nfs_top::sampler::{spawn_sampler, Backend, SamplerConfig};
 #[cfg(feature = "crossterm")]
 use nfs_top::tui;
 
@@ -30,6 +30,8 @@ struct Cli {
     raw_dump: Option<String>,
     #[arg(long, default_value = "2049,20049")]
     remote_ports: String,
+    #[arg(long, value_enum, default_value_t = BackendArg::Auto)]
+    backend: BackendArg,
 }
 
 #[derive(Copy, Clone, Debug, ValueEnum)]
@@ -50,6 +52,13 @@ enum UnitsArg {
     M,
     G,
     T,
+}
+
+#[derive(Copy, Clone, Debug, ValueEnum)]
+enum BackendArg {
+    Auto,
+    Proc,
+    Ebpf,
 }
 
 fn main() {
@@ -88,11 +97,25 @@ fn run() -> Result<()> {
         SortArg::Obsconn => SortKey::ObsConn,
     };
 
+    let backend = match cli.backend {
+        BackendArg::Auto => Backend::Auto,
+        BackendArg::Proc => Backend::Proc,
+        BackendArg::Ebpf => Backend::Ebpf,
+    };
+    #[cfg(not(feature = "ebpf"))]
+    if backend == Backend::Ebpf {
+        return Err(anyhow!(
+            "--backend=ebpf requires a build with the `ebpf` cargo feature; this \
+             binary was built without it (use --backend=auto or rebuild with --features=ebpf)"
+        ));
+    }
+
     let interval = Arc::new(AtomicU64::new(cli.interval_ms));
     let rx = spawn_sampler(SamplerConfig {
         interval: Arc::clone(&interval),
         no_dns: cli.no_dns,
         remote_ports: ports,
+        backend,
     });
 
     if let Some(path) = cli.raw_dump {
@@ -126,4 +149,28 @@ fn parse_ports(s: &str) -> Result<Vec<u16>> {
         return Err(anyhow!("no ports specified"));
     }
     Ok(v)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn backend_defaults_to_auto() {
+        let cli = Cli::try_parse_from(["nfs-top"]).unwrap();
+        assert!(matches!(cli.backend, BackendArg::Auto));
+    }
+
+    #[test]
+    fn backend_accepts_proc_and_ebpf() {
+        let cli = Cli::try_parse_from(["nfs-top", "--backend", "proc"]).unwrap();
+        assert!(matches!(cli.backend, BackendArg::Proc));
+        let cli = Cli::try_parse_from(["nfs-top", "--backend", "ebpf"]).unwrap();
+        assert!(matches!(cli.backend, BackendArg::Ebpf));
+    }
+
+    #[test]
+    fn backend_rejects_unknown_value() {
+        assert!(Cli::try_parse_from(["nfs-top", "--backend", "bogus"]).is_err());
+    }
 }

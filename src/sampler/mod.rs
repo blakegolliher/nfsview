@@ -20,11 +20,25 @@ pub mod mountstats;
 pub mod rpc;
 pub mod sockets;
 
+/// Runtime selection of the latency backend, independent of which backends
+/// were compiled in. `Auto` uses eBPF when the feature is built and attach
+/// succeeds, otherwise falls back to /proc. `Proc` forces /proc only even on
+/// an eBPF-enabled build. `Ebpf` insists on eBPF and surfaces a louder warning
+/// when it can't attach.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Backend {
+    #[default]
+    Auto,
+    Proc,
+    Ebpf,
+}
+
 #[derive(Debug, Clone)]
 pub struct SamplerConfig {
     pub interval: Arc<AtomicU64>,
     pub no_dns: bool,
     pub remote_ports: Vec<u16>,
+    pub backend: Backend,
 }
 
 pub fn spawn_sampler(cfg: SamplerConfig) -> Receiver<Result<Snapshot>> {
@@ -40,9 +54,19 @@ pub fn spawn_sampler(cfg: SamplerConfig) -> Receiver<Result<Snapshot>> {
         // status bar surfaces it normally.
         #[cfg(feature = "ebpf")]
         let (mut enricher, mut pending_ebpf_error): (Option<ebpf::Enricher>, Option<String>) =
-            match ebpf::Enricher::try_new() {
-                Ok(e) => (Some(e), None),
-                Err(e) => (None, Some(format!("ebpf disabled: {e:#}"))),
+            if cfg.backend == Backend::Proc {
+                (None, None)
+            } else {
+                match ebpf::Enricher::try_new() {
+                    Ok(e) => (Some(e), None),
+                    // Keep the "ebpf disabled:" wording for Auto (documented in
+                    // the README troubleshooting section); make Ebpf louder
+                    // since the user explicitly asked for it.
+                    Err(e) if cfg.backend == Backend::Ebpf => {
+                        (None, Some(format!("ebpf backend requested but unavailable: {e:#}")))
+                    }
+                    Err(e) => (None, Some(format!("ebpf disabled: {e:#}"))),
+                }
             };
 
         loop {
