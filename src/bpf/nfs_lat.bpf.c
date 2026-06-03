@@ -1,5 +1,5 @@
 /*
- * nfs-top eBPF latency probes.
+ * nfsview eBPF latency probes.
  *
  * Pairs NFS-client-layer enter/exit tracepoints to measure per-op latency
  * in log2-ns buckets. Userspace folds the histograms into MountDerived.bpf

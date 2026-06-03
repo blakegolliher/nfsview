@@ -1,10 +1,10 @@
 [package]
-name = "nfs-top"
+name = "nfsview"
 version = "0.1.1"
 edition = "2024"
 license = "MIT"
 description = "Ratatui-inspired Linux NFS client monitor for /proc/* data sources"
-repository = "https://github.com/blakegolliher/nfs-top"
+repository = "https://github.com/blakegolliher/nfsview"
 readme = "README.md"
 
 [features]
@@ -13,7 +13,7 @@ crossterm = ["dep:crossterm", "ratatui/crossterm"]
 termion = ["dep:termion", "ratatui/termion"]
 termwiz = ["dep:termwiz", "ratatui/termwiz"]
 # Optional eBPF latency enricher. Requires Linux 5.14+, BTF, clang at build
-# time, and CAP_BPF (or root) at runtime. Off by default; nfs-top is fully
+# time, and CAP_BPF (or root) at runtime. Off by default; nfsview is fully
 # functional without it.
 ebpf = ["dep:libbpf-rs", "dep:libbpf-cargo"]
 

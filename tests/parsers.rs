@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 
-use nfs_top::sampler::mountstats::parse_mountstats;
-use nfs_top::sampler::sockets::{parse_tcp_lines, SocketObs};
+use nfsview::sampler::mountstats::parse_mountstats;
+use nfsview::sampler::sockets::{parse_tcp_lines, SocketObs};
 
 #[test]
 fn mountstats_fixture_parses() {

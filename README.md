@@ -1,4 +1,4 @@
-# nfs-top
+# nfsview
 
 Ratatui-inspired Linux NFS client monitor for `/proc/*` data sources.
 
@@ -20,12 +20,12 @@ Ratatui-inspired Linux NFS client monitor for `/proc/*` data sources.
     - `aarch64-unknown-linux-musl`
     - `armv7-unknown-linux-musleabihf`
 
-Artifacts are placed in `dist/` as `nfs-top-<target>`.
+Artifacts are placed in `dist/` as `nfsview-<target>`.
 
 ## Packages
 
 - `make rpm` — Build an `.rpm` for the host arch (set `RPM_TARGET=<triple>`
-  to cross-package). Output: `dist/nfs-top-<version>-<release>.<arch>.rpm`.
+  to cross-package). Output: `dist/nfsview-<version>-<release>.<arch>.rpm`.
   Requires `rpmbuild` (`dnf install rpm-build`).
 - `make rpm-all` — Build `.rpm`s for all targets.
 - `make deb` / `make deb-all` — Equivalent for `.deb`. Works on RHEL hosts
@@ -100,10 +100,10 @@ path keeps running.
 
 ```sh
 cargo build --release --features=ebpf
-sudo ./target/release/nfs-top
+sudo ./target/release/nfsview
 # or grant capability once and run unprivileged:
-sudo setcap cap_bpf,cap_sys_resource=ep ./target/release/nfs-top
-./target/release/nfs-top
+sudo setcap cap_bpf,cap_sys_resource=ep ./target/release/nfsview
+./target/release/nfsview
 ```
 
 A standalone smoke harness verifies the BPF path independently of the

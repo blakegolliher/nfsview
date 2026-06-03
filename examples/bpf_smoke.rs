@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Result};
 
-use nfs_top::sampler::ebpf::Enricher;
+use nfsview::sampler::ebpf::Enricher;
 
 fn main() -> Result<()> {
     let mounts = nfs_mounts()?;

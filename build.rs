@@ -1,5 +1,5 @@
 /*
- * Build script for nfs-top.
+ * Build script for nfsview.
  *
  * Default behaviour: do nothing (the project builds with stable Rust and
  * needs no codegen). When the `ebpf` feature is enabled, compile the BPF

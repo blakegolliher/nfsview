@@ -39,7 +39,7 @@ pub fn draw(f: &mut Frame<'_>, app: &App) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" nfs-top ")
+                .title(" nfsview ")
                 .style(Style::default().bg(PANEL)),
         )
         .select(app.tab.idx())

@@ -5,14 +5,14 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, ValueEnum};
 
-use nfs_top::app::App;
-use nfs_top::model::types::{SortKey, UnitsMode};
-use nfs_top::sampler::{spawn_sampler, SamplerConfig};
+use nfsview::app::App;
+use nfsview::model::types::{SortKey, UnitsMode};
+use nfsview::sampler::{spawn_sampler, SamplerConfig};
 #[cfg(feature = "crossterm")]
-use nfs_top::tui;
+use nfsview::tui;
 
 #[derive(Parser, Debug)]
-#[command(name = "nfs-top", version)]
+#[command(name = "nfsview", version)]
 struct Cli {
     #[arg(long, default_value_t = 1000)]
     interval_ms: u64,
@@ -111,7 +111,7 @@ fn run() -> Result<()> {
     {
         let _ = (cli.history, units, sort);
         let snap = rx.recv().context("waiting for sampler")??;
-        println!("nfs-top built without crossterm; sample mounts: {}", snap.mounts.len());
+        println!("nfsview built without crossterm; sample mounts: {}", snap.mounts.len());
         Ok(())
     }
 }

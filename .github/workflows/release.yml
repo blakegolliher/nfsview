@@ -35,17 +35,17 @@ jobs:
               rustup component add rustfmt
 
               cargo build --release --features ebpf
-              strip --strip-unneeded target/release/nfs-top
+              strip --strip-unneeded target/release/nfsview
 
               STAGE=$(mktemp -d)
               mkdir -p "$STAGE/usr/local/bin"
-              mkdir -p "$STAGE/usr/local/share/doc/nfs-top"
-              install -m 0755 target/release/nfs-top "$STAGE/usr/local/bin/nfs-top"
-              install -m 0644 README.md "$STAGE/usr/local/share/doc/nfs-top/README.md"
-              install -m 0644 LICENSE   "$STAGE/usr/local/share/doc/nfs-top/LICENSE"
+              mkdir -p "$STAGE/usr/local/share/doc/nfsview"
+              install -m 0755 target/release/nfsview "$STAGE/usr/local/bin/nfsview"
+              install -m 0644 README.md "$STAGE/usr/local/share/doc/nfsview/README.md"
+              install -m 0644 LICENSE   "$STAGE/usr/local/share/doc/nfsview/LICENSE"
 
               # ---------- tarball ----------
-              TAR_BASE="nfs-top-${VERSION}-x86_64-linux"
+              TAR_BASE="nfsview-${VERSION}-x86_64-linux"
               ( cd "$STAGE" && tar --owner=0 --group=0 -czf "/work/dist/${TAR_BASE}.tar.gz" . )
 
               # ---------- deb (pure ar+tar; dpkg-deb absent on Rocky) ----------
@@ -56,7 +56,7 @@ jobs:
               cp -a "$STAGE/." "$DEB_STAGE/"
               INSTALLED_SIZE=$(du -sk --apparent-size "$DEB_STAGE/usr" | cut -f1)
               printf "%s\n" \
-                "Package: nfs-top" \
+                "Package: nfsview" \
                 "Version: $VERSION" \
                 "Section: admin" \
                 "Priority: optional" \
@@ -64,9 +64,9 @@ jobs:
                 "Maintainer: Blake Golliher <blakegolliher@gmail.com>" \
                 "Installed-Size: $INSTALLED_SIZE" \
                 "Depends: libc6, libelf1, zlib1g, libzstd1" \
-                "Homepage: https://github.com/blakegolliher/nfs-top" \
+                "Homepage: https://github.com/blakegolliher/nfsview" \
                 "Description: Real-time NFS client monitor (bandwidth, IOPS, latency)" \
-                " nfs-top is a Ratatui-inspired Linux NFS client monitor. It reads" \
+                " nfsview is a Ratatui-inspired Linux NFS client monitor. It reads" \
                 " /proc/self/mountstats, /proc/net/rpc/nfs, and /proc/net/tcp{,6}, and" \
                 " optionally enriches per-op latency from kernel-side eBPF probes," \
                 " rendering a live dashboard of per-mount throughput, ops, and latency." \
@@ -78,38 +78,38 @@ jobs:
               ( cd "$DEB_STAGE" \
                 && tar --owner=0 --group=0 --format=gnu --exclude=./DEBIAN -czf "$DEBTMP/data.tar.gz" . )
               ( cd "$DEBTMP" \
-                && ar rc "/work/dist/nfs-top_${VERSION}-1_amd64.deb" debian-binary control.tar.gz data.tar.gz )
+                && ar rc "/work/dist/nfsview_${VERSION}-1_amd64.deb" debian-binary control.tar.gz data.tar.gz )
 
               # ---------- rpm ---------- (last: rpmbuild deletes $STAGE)
               RPMTMP=$(mktemp -d)
               mkdir -p "$RPMTMP/rpmbuild"/{BUILD,RPMS,SRPMS,SOURCES,SPECS}
               printf "%s\n" \
-                "Name:        nfs-top" \
+                "Name:        nfsview" \
                 "Version:     $VERSION" \
                 "Release:     1" \
                 "Summary:     Real-time NFS client monitor (bandwidth, IOPS, latency)" \
                 "License:     MIT" \
-                "URL:         https://github.com/blakegolliher/nfs-top" \
+                "URL:         https://github.com/blakegolliher/nfsview" \
                 "BuildArch:   x86_64" \
                 "" \
                 "%description" \
-                "nfs-top is a Ratatui-inspired Linux NFS client monitor. It reads" \
+                "nfsview is a Ratatui-inspired Linux NFS client monitor. It reads" \
                 "/proc/self/mountstats, /proc/net/rpc/nfs, and /proc/net/tcp{,6}, and" \
                 "optionally enriches per-op latency from kernel-side eBPF probes," \
                 "rendering a live dashboard of per-mount throughput, ops, and latency." \
                 "" \
                 "%files" \
-                "%attr(0755,root,root) /usr/local/bin/nfs-top" \
-                "%doc /usr/local/share/doc/nfs-top/README.md" \
-                "%license /usr/local/share/doc/nfs-top/LICENSE" \
-                > "$RPMTMP/nfs-top.spec"
+                "%attr(0755,root,root) /usr/local/bin/nfsview" \
+                "%doc /usr/local/share/doc/nfsview/README.md" \
+                "%license /usr/local/share/doc/nfsview/LICENSE" \
+                > "$RPMTMP/nfsview.spec"
               rpmbuild --quiet \
                 --define "_topdir $RPMTMP/rpmbuild" \
                 --define "dist %{nil}" \
                 --buildroot "$STAGE" \
                 --target x86_64 \
-                -bb "$RPMTMP/nfs-top.spec"
-              cp "$RPMTMP/rpmbuild/RPMS/x86_64/nfs-top-${VERSION}-1.x86_64.rpm" /work/dist/
+                -bb "$RPMTMP/nfsview.spec"
+              cp "$RPMTMP/rpmbuild/RPMS/x86_64/nfsview-${VERSION}-1.x86_64.rpm" /work/dist/
 
               ls -lh /work/dist
             '
@@ -120,26 +120,26 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/nfs-top-*.tar.gz
-            dist/nfs-top-*.rpm
-            dist/nfs-top_*.deb
+            dist/nfsview-*.tar.gz
+            dist/nfsview-*.rpm
+            dist/nfsview_*.deb
           generate_release_notes: true
           body: |
             ## Install
 
             **RHEL / Rocky / Alma 9, Fedora:**
             ```
-            sudo dnf install ./nfs-top-VERSION-1.x86_64.rpm
+            sudo dnf install ./nfsview-VERSION-1.x86_64.rpm
             ```
 
             **Ubuntu 22.04+ / Debian 12+:**
             ```
-            sudo apt install ./nfs-top_VERSION-1_amd64.deb
+            sudo apt install ./nfsview_VERSION-1_amd64.deb
             ```
 
             **Tarball (extract to /):**
             ```
-            sudo tar -C / -xzf nfs-top-VERSION-x86_64-linux.tar.gz
+            sudo tar -C / -xzf nfsview-VERSION-x86_64-linux.tar.gz
             ```
 
             Replace `VERSION` with the release version above (without the leading `v`).

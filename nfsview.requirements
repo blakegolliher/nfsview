@@ -1,10 +1,10 @@
-## Codex Build Prompt: `nfs-top` — Ratatui demo-style NFS client TUI (with observed connections by IP)
+## Codex Build Prompt: `nfsview` — Ratatui demo-style NFS client TUI (with observed connections by IP)
 
 You are an expert Rust engineer specializing in terminal UIs and Linux kernel statistics.
 
 ### Goal
 
-Build a production-quality Rust terminal UI (TUI) named **`nfs-top`** that displays **real-time Linux NFS client statistics**. The UI and app architecture must be clearly inspired by Ratatui’s official `examples/apps/demo` app (tabs, table selection, charts/gauges, help footer, event loop, input modes). Users should feel it’s “the Ratatui demo, but for NFS.” ([ratatui.rs](https://ratatui.rs/examples/apps/demo/?utm_source=chatgpt.com))
+Build a production-quality Rust terminal UI (TUI) named **`nfsview`** that displays **real-time Linux NFS client statistics**. The UI and app architecture must be clearly inspired by Ratatui’s official `examples/apps/demo` app (tabs, table selection, charts/gauges, help footer, event loop, input modes). Users should feel it’s “the Ratatui demo, but for NFS.” ([ratatui.rs](https://ratatui.rs/examples/apps/demo/?utm_source=chatgpt.com))
 
 ### Scope (MVP)
 

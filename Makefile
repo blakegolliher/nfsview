@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-BIN ?= nfs-top
+BIN ?= nfsview
 PROFILE ?= release
 # `ebpf` is on by default so packaged builds carry the eBPF latency enricher.
 # Override with `make FEATURES=crossterm ...` (or any other set) to opt out.
@@ -189,7 +189,7 @@ PKG_NAME        ?= $(BIN)
 PKG_VERSION     ?= $(shell awk -F'"' '/^version[[:space:]]*=/ {print $$2; exit}' Cargo.toml)
 PKG_MAINTAINER  ?= Blake Golliher <blakegolliher@gmail.com>
 PKG_DESCRIPTION ?= Ratatui-inspired Linux NFS client monitor
-PKG_HOMEPAGE    ?= https://github.com/blakegolliher/nfs-top
+PKG_HOMEPAGE    ?= https://github.com/blakegolliher/nfsview
 PKG_SECTION     ?= admin
 PKG_PRIORITY    ?= optional
 
