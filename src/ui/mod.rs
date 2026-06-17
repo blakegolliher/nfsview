@@ -9,7 +9,6 @@ use crate::app::{App, Tab};
 pub mod help;
 pub mod hist;
 pub mod latency;
-pub mod overview;
 pub mod raw;
 pub mod rpc_mix;
 pub mod servers;
@@ -48,13 +47,12 @@ pub fn draw(f: &mut Frame<'_>, app: &App) {
     f.render_widget(tabs, areas[0]);
 
     match app.tab {
-        Tab::Overview => overview::draw(f, areas[1], app),
+        Tab::Servers => servers::draw(f, areas[1], app),
         Tab::RpcMix => rpc_mix::draw(f, areas[1], app),
         Tab::Trends => latency::draw(f, areas[1], app),
         Tab::Hist => hist::draw(f, areas[1], app),
         Tab::Connections => transport::draw(f, areas[1], app),
         Tab::Raw => raw::draw(f, areas[1], app),
-        Tab::Servers => servers::draw(f, areas[1], app),
         Tab::Help => help::draw(f, areas[1], app),
     }
 

@@ -139,6 +139,11 @@ pub struct ServerAgg {
     pub avg_rtt_ms: Option<f64>,
     pub avg_exe_ms: Option<f64>,
     pub observed_conns: u64,
+    /// Configured `nconnect=` from the mount options (max across this
+    /// server's mounts). The number of TCP connections the client was told
+    /// to open — reliable from mountstats, unlike `observed_conns` which
+    /// needs the server addr to match live sockets.
+    pub nconnect: Option<u32>,
     pub per_op: Vec<OpDerived>,
 }
 

@@ -10,14 +10,10 @@ use crate::ui::{draw_line_card, panel, BG, ACCENT_A, ACCENT_B, WARN};
 use crate::util::format::{fmt_ms, fmt_rate};
 
 pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
-    let outer = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Min(8), Constraint::Length(3)])
-        .split(area);
     let grid = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
-        .split(outer[0]);
+        .split(area);
     let row1 = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
@@ -53,7 +49,7 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
             draw_latency_panel(
                 f,
                 row2[0],
-                "Read Latency",
+                "Read Latency (est.)",
                 &read_lat,
                 m.derived
                     .per_op
@@ -66,7 +62,7 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
             draw_latency_panel(
                 f,
                 row2[1],
-                "Write Latency",
+                "Write Latency (est.)",
                 &write_lat,
                 m.derived
                     .per_op
@@ -77,19 +73,11 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
                 ACCENT_B,
             );
         } else {
-            f.render_widget(Paragraph::new("No trend history yet for selected mount").block(panel("Trends")), outer[0]);
+            f.render_widget(Paragraph::new("No trend history yet for selected mount").block(panel("Trends")), area);
         }
     } else {
-        f.render_widget(Paragraph::new("No mount selected").block(panel("Trends")), outer[0]);
+        f.render_widget(Paragraph::new("No mount selected").block(panel("Trends")), area);
     }
-
-    let footer = Paragraph::new(format!(
-        "Selected mode: {} | key: p to cycle | percentile lines are estimated from rolling sampled averages",
-        app.percentile_mode.label()
-    ))
-    .style(Style::default().fg(Color::Black).bg(WARN))
-    .block(panel("Trend Controls"));
-    f.render_widget(footer, outer[1]);
 }
 
 fn draw_latency_panel(
@@ -113,15 +101,6 @@ fn draw_latency_panel(
                 .constraints([Constraint::Length(1), Constraint::Min(3)])
                 .split(inner);
 
-            // Colored legend
-            let legend = Line::from(vec![
-                Span::styled("-- avg ", Style::default().fg(color)),
-                Span::styled("-- p90 ", Style::default().fg(Color::Yellow)),
-                Span::styled("-- p95 ", Style::default().fg(WARN)),
-                Span::styled("-- p99", Style::default().fg(Color::Red)),
-            ]);
-            f.render_widget(Paragraph::new(legend), parts[0]);
-
             let avg_data = to_chart_data(base_series);
             let p90_series = percentile_series(base_series, 0.90);
             let p95_series = percentile_series(base_series, 0.95);
@@ -129,6 +108,16 @@ fn draw_latency_panel(
             let p90_data = to_chart_data(&p90_series);
             let p95_data = to_chart_data(&p95_series);
             let p99_data = to_chart_data(&p99_series);
+
+            // Colored legend with the latest value of each line. The dashes
+            // are color swatches; the numbers are the current readouts.
+            let legend = Line::from(vec![
+                Span::styled(format!("-- avg {} ", fmt_ms(current_avg)), Style::default().fg(color)),
+                Span::styled(format!("-- p90 {} ", fmt_ms(last_val(&p90_series))), Style::default().fg(Color::Yellow)),
+                Span::styled(format!("-- p95 {} ", fmt_ms(last_val(&p95_series))), Style::default().fg(WARN)),
+                Span::styled(format!("-- p99 {}", fmt_ms(last_val(&p99_series))), Style::default().fg(Color::Red)),
+            ]);
+            f.render_widget(Paragraph::new(legend), parts[0]);
 
             if avg_data.is_empty() {
                 return;
@@ -179,16 +168,30 @@ fn draw_latency_panel(
                 PercentileMode::P99 => percentile_series(base_series, 0.99),
                 _ => unreachable!(),
             };
+            // Avg mode tracks the live per-op average; the percentile modes
+            // read the latest point of their rolling-window series so the
+            // displayed number matches the selected line (not the avg).
+            let current = match other {
+                PercentileMode::Avg => current_avg,
+                _ => last_val(&series),
+            };
             draw_line_card(
                 f,
                 area,
-                &format!("{} {} {}", title, other.label(), fmt_ms(current_avg)),
+                &format!("{} {}", title, other.label()),
                 &series,
-                other.label(),
+                &fmt_ms(current),
                 color,
             );
         }
     }
+}
+
+/// Latest finite, positive sample in a series — the "current" value shown
+/// in the latency legend. Returns None when the series has no real data yet
+/// (so the legend renders "-" rather than a stale or zero reading).
+fn last_val(series: &[f64]) -> Option<f64> {
+    series.iter().rev().copied().find(|v| v.is_finite() && *v > 0.0)
 }
 
 fn to_chart_data(series: &[f64]) -> Vec<(f64, f64)> {

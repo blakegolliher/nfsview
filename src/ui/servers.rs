@@ -50,7 +50,7 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
 
     let servers = app.aggregate_servers();
 
-    let header = Row::new(vec!["Server", "Host", "Read", "Write", "Ops/s", "RTT", "EXE", "Conns"])
+    let header = Row::new(vec!["Host", "Read", "Write", "Ops/s", "RTT", "EXE", "nconn"])
         .style(Style::default().fg(ACCENT_A).add_modifier(Modifier::BOLD));
 
     let rows = servers
@@ -63,22 +63,20 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
                 Style::default().fg(Color::White)
             };
             Row::new(vec![
-                Cell::from(s.addr.map(|a| a.to_string()).unwrap_or_else(|| "unknown".into())),
                 Cell::from(s.hostname.clone()),
                 Cell::from(fmt_rate(s.read_bps, app.units)),
                 Cell::from(fmt_rate(s.write_bps, app.units)),
                 Cell::from(format!("{:.1}", s.ops_per_sec)),
                 Cell::from(fmt_ms(s.avg_rtt_ms)),
                 Cell::from(fmt_ms(s.avg_exe_ms)),
-                Cell::from(s.observed_conns.to_string()),
+                Cell::from(s.nconnect.map(|n| n.to_string()).unwrap_or_else(|| "-".into())),
             ])
             .style(style)
         })
         .collect::<Vec<_>>();
 
     let widths = [
-        Constraint::Length(16),
-        Constraint::Length(16),
+        Constraint::Length(24),
         Constraint::Length(12),
         Constraint::Length(12),
         Constraint::Length(8),
@@ -115,11 +113,10 @@ pub fn draw(f: &mut Frame<'_>, area: ratatui::layout::Rect, app: &App) {
             .collect();
 
         format!(
-            "host: {}\naddr: {}\nmounts: {}\nconns: {}\n\nRPC mix (top 8):\n{}",
+            "host: {}\nmounts: {}\nnconnect: {}\n\nRPC mix (top 8):\n{}",
             s.hostname,
-            s.addr.map(|a| a.to_string()).unwrap_or_else(|| "-".into()),
             mounts_str,
-            s.observed_conns,
+            s.nconnect.map(|n| n.to_string()).unwrap_or_else(|| "-".into()),
             rpc_lines.join("\n"),
         )
     } else {

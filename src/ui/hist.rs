@@ -1,7 +1,7 @@
 //! eBPF latency histogram tab.
 //!
 //! Renders per-op p50..p99.999 + a log-scale bucket sparkline for the
-//! mount currently selected on the Overview pane. Populated from
+//! currently selected mount. Populated from
 //! `MountDerived.bpf`. Visible whenever the binary is built with the
 //! `ebpf` feature; on builds or hosts without working probes — or when
 //! the selected mount has seen no samples this tick — the tab shows a
@@ -77,7 +77,7 @@ fn empty_message(app: &App) -> Line<'static> {
     } else if !attached {
         "eBPF backend not active — needs CAP_BPF and a kernel with NFS BTF (RHEL 9+). Run with sudo or `setcap cap_bpf,cap_sys_resource=ep`. (Check the status bar for the load error.)".into()
     } else if !has_mount {
-        "eBPF probes attached — no NFS mount selected on the Overview pane.".into()
+        "eBPF probes attached — no NFS mount selected.".into()
     } else {
         match app.selected_mount() {
             Some(m) => format!(

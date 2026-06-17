@@ -12,57 +12,53 @@ use crate::util::ringbuf::RingBuf;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
-    Overview,
+    Servers,
     RpcMix,
     Trends,
     Hist,
     Connections,
     Raw,
-    Servers,
     Help,
 }
 
 impl Tab {
-    pub fn titles() -> [&'static str; 8] {
-        ["Overview", "RPC Mix", "Trends", "Hist", "Connections", "Raw", "Servers", "Help"]
+    pub fn titles() -> [&'static str; 7] {
+        ["Servers", "RPC Mix", "Trends", "Hist", "Connections", "Raw", "Help"]
     }
 
     pub fn next(self) -> Self {
         match self {
-            Tab::Overview => Tab::RpcMix,
+            Tab::Servers => Tab::RpcMix,
             Tab::RpcMix => Tab::Trends,
             Tab::Trends => Tab::Hist,
             Tab::Hist => Tab::Connections,
             Tab::Connections => Tab::Raw,
-            Tab::Raw => Tab::Servers,
-            Tab::Servers => Tab::Help,
-            Tab::Help => Tab::Overview,
+            Tab::Raw => Tab::Help,
+            Tab::Help => Tab::Servers,
         }
     }
 
     pub fn prev(self) -> Self {
         match self {
-            Tab::Overview => Tab::Help,
-            Tab::RpcMix => Tab::Overview,
+            Tab::Servers => Tab::Help,
+            Tab::RpcMix => Tab::Servers,
             Tab::Trends => Tab::RpcMix,
             Tab::Hist => Tab::Trends,
             Tab::Connections => Tab::Hist,
             Tab::Raw => Tab::Connections,
-            Tab::Servers => Tab::Raw,
-            Tab::Help => Tab::Servers,
+            Tab::Help => Tab::Raw,
         }
     }
 
     pub fn idx(self) -> usize {
         match self {
-            Tab::Overview => 0,
+            Tab::Servers => 0,
             Tab::RpcMix => 1,
             Tab::Trends => 2,
             Tab::Hist => 3,
             Tab::Connections => 4,
             Tab::Raw => 5,
-            Tab::Servers => 6,
-            Tab::Help => 7,
+            Tab::Help => 6,
         }
     }
 }
@@ -184,7 +180,7 @@ impl App {
     pub fn new(history: usize, units: UnitsMode, interval: Arc<AtomicU64>, sort: SortKey, filter: String) -> Self {
         let filter_lower = filter.to_lowercase();
         Self {
-            tab: Tab::Overview,
+            tab: Tab::Servers,
             selected: 0,
             server_selected: 0,
             selected_mount_key: None,
@@ -537,6 +533,7 @@ fn build_server_agg(addr: Option<IpAddr>, group: &[&MountView]) -> ServerAgg {
     let write_bps: f64 = group.iter().map(|m| m.derived.write_bps).sum();
     let ops_per_sec: f64 = group.iter().map(|m| m.derived.ops_per_sec).sum();
     let observed_conns: u64 = group.iter().map(|m| m.derived.observed_conns).sum();
+    let nconnect: Option<u32> = group.iter().filter_map(|m| m.counters.nconnect).max();
 
     let avg_rtt_ms = ops_weighted_mean(group.iter().map(|m| (m.derived.avg_rtt_ms, m.derived.ops_per_sec)));
     let avg_exe_ms = ops_weighted_mean(group.iter().map(|m| (m.derived.avg_exe_ms, m.derived.ops_per_sec)));
@@ -588,6 +585,7 @@ fn build_server_agg(addr: Option<IpAddr>, group: &[&MountView]) -> ServerAgg {
         avg_rtt_ms,
         avg_exe_ms,
         observed_conns,
+        nconnect,
         per_op,
     }
 }
