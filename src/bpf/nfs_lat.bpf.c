@@ -110,12 +110,24 @@ struct {
 	__type(value, struct inflight_val);
 } inflight_pid SEC(".maps");
 
-/* floor(log2(ns)) capped at 63. Caller guarantees ns >= 1. */
+/* floor(log2(ns)) capped at 63; returns 0 for ns < 2.
+ *
+ * Unrolled bit-narrowing rather than `63 - __builtin_clzll(ns)`: the BPF
+ * target has no count-leading-zeros instruction, and LLVM's BPF backend
+ * (through at least clang 18) aborts lowering the CTLZ expansion with
+ * "fatal error: unimplemented opcode" under the default -mcpu. The shift
+ * sequence below is fully branch-unrolled, verifier-friendly, and the u64
+ * exponent never exceeds 63 so the result is inherently capped. */
 static __always_inline __u16 log2_bucket(__u64 ns)
 {
-	if (ns < 2)
-		return 0;
-	return 63 - __builtin_clzll(ns);
+	__u16 b = 0;
+	if (ns >= (1ULL << 32)) { ns >>= 32; b += 32; }
+	if (ns >= (1ULL << 16)) { ns >>= 16; b += 16; }
+	if (ns >= (1ULL << 8))  { ns >>= 8;  b += 8;  }
+	if (ns >= (1ULL << 4))  { ns >>= 4;  b += 4;  }
+	if (ns >= (1ULL << 2))  { ns >>= 2;  b += 2;  }
+	if (ns >= (1ULL << 1))  {            b += 1;  }
+	return b;
 }
 
 static __always_inline __u32 dev_from_pgio(void *hdr_ptr)
